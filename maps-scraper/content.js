@@ -21,12 +21,23 @@
   const prof = (s) => PACE.profileFor(s.settings && s.settings.paceProfile);
   const motionOn = (s) => !s || !s.settings || s.settings.motion !== false;
 
+  // A deliberate rest that is long enough to look like a stall to the background
+  // watchdog (>90s of no progress). Push lastProgressAt out to the expected resume
+  // so the watchdog stays quiet while we are only acting human.
+  async function humanSleep(s, ms) {
+    if (ms >= 30000) {
+      s.lastProgressAt = PACE.restUntil(Date.now(), ms);
+      await setState(s);
+    }
+    await sleep(ms);
+  }
+
   async function paceGate(s, kind) {
     const p = prof(s);
     const { waitMs, bucket } = PACE.take(s.bucket, p, Date.now());
     s.bucket = bucket;
     if (waitMs > 0) await sleep(waitMs);
-    await sleep(PACE.delay(p, kind, rng));
+    await humanSleep(s, PACE.delay(p, kind, rng));
   }
 
   // Between pages: rate + human delay + periodic long break / session break.
@@ -37,11 +48,11 @@
     await paceGate(s, "page");
     if (s.pagesSinceBreak >= p.breakEveryPages) {
       s.pagesSinceBreak = 0;
-      await sleep(PACE.delay(p, "break", rng));
+      await humanSleep(s, PACE.delay(p, "break", rng));
     }
     if (Date.now() - s.sessionStart >= p.sessionMinutes * 60000) {
       s.sessionStart = Date.now();
-      await sleep(PACE.delay(p, "session", rng));
+      await humanSleep(s, PACE.delay(p, "session", rng));
     }
   }
 
@@ -52,7 +63,7 @@
     await paceGate(s, "task");
     if (s.tasksSinceBreak >= p.breakEveryTasks) {
       s.tasksSinceBreak = 0;
-      await sleep(PACE.delay(p, "taskBreak", rng));
+      await humanSleep(s, PACE.delay(p, "taskBreak", rng));
     }
   }
 

@@ -1,0 +1,19 @@
+# Never commit these — errors.txt contains the live license key.
+/errors.txt
+/PROMPTOPENCODE.txt
+/.DS_Store
+
+# Unrelated commercial reference app (not part of this extension)
+/assets/
+/backups/
+/config/
+/controllers/
+/libs/
+/popup/
+/views/
+/manifest.json
+/rea/
+
+# Build artifacts (the canonical portable release IS tracked)
+*.zip
+!GoogleMapExtractor_v1.5.0_portable.zip

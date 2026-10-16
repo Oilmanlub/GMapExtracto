@@ -46,16 +46,21 @@
     return el ? (el.textContent || "").trim() : "";
   }
 
+  // First group with a confident match wins, so a single stale element left in an
+  // older selector can't starve the 20 real cards in a later group. A lone match
+  // is kept only as a fallback for genuinely single-result pages.
   function queryAll(scope, selectors) {
+    let single = null;
     for (const s of selectors) {
-      try {
-        const els = scope.querySelectorAll(s);
-        if (els.length) return Array.from(els);
-      } catch {}
+      let els;
+      try { els = scope.querySelectorAll(s); } catch { continue; }
+      if (els.length > 1) return Array.from(els);
+      if (els.length === 1 && !single) single = Array.from(els);
     }
-    return [];
+    return single || [];
   }
 
   root.SEL = SEL;
   root.SELX = { isGoogleHost, firstMatch, firstText, queryAll };
+  if (typeof module !== "undefined" && module.exports) module.exports = root.SELX;
 })(typeof globalThis !== "undefined" ? globalThis : this);

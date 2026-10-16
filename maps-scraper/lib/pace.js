@@ -67,6 +67,13 @@
     return { level: lv + 1, minutes: BACKOFF_MINUTES[lv], stop: false };
   }
 
+  // Expected end of a deliberate rest. Callers push lastProgressAt this far out
+  // before sleeping through a long human break, so the stall watchdog (which
+  // measures progress age) doesn't misread an intentional pause as a hang.
+  function restUntil(now, ms) {
+    return (now == null ? Date.now() : now) + Math.max(0, ms || 0);
+  }
+
   // ---- profiles --------------------------------------------------------------
   const PROFILES = {
     conservative: {
@@ -113,7 +120,7 @@
 
   root.PACE = {
     PROFILES, profileFor, mulberry32, normal, logNormal, shuffle,
-    newBucket, take, nextBackoff, delay, BACKOFF_MINUTES,
+    newBucket, take, nextBackoff, delay, restUntil, BACKOFF_MINUTES,
     _internal: { mulberry32, normal, logNormal, shuffle },
   };
   if (typeof module !== "undefined" && module.exports) module.exports = root.PACE;

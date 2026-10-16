@@ -30,15 +30,33 @@ function notify(title, message) {
 
 // ---- licensing: free tier caps total rows at FREE_LIMIT --------------------
 // Licensed users save everything; free users get the remaining free slots only.
+
+// Row-count revision, read by the panel's poll so it can skip pointless reloads.
+async function bumpRowsRev() {
+  const st = await getState();
+  if (st) { st.rowsRev = (st.rowsRev || 0) + 1; await setState(st); }
+}
+
 async function saveRows(rows) {
   const lic = await LIC.status();
-  if (lic.licensed) return { added: await upsertRows(rows) };
-  const existing = await allRows();
-  const remaining = Math.max(0, LIC.FREE_LIMIT - existing.length);
-  if (remaining <= 0) return { added: 0, limit: true, total: existing.length };
-  const added = rows.length ? await upsertRows(rows.slice(0, remaining)) : 0;
-  const total = Math.min(LIC.FREE_LIMIT, existing.length + added);
-  return { added, limit: total >= LIC.FREE_LIMIT, total };
+  let added = 0;
+  let limit = false;
+  let total = 0;
+  if (lic.licensed) {
+    added = await upsertRows(rows);
+  } else {
+    const existing = await allRows();
+    const remaining = Math.max(0, LIC.FREE_LIMIT - existing.length);
+    total = existing.length;
+    if (remaining > 0) {
+      added = rows.length ? await upsertRows(rows.slice(0, remaining)) : 0;
+      total = Math.min(LIC.FREE_LIMIT, existing.length + added);
+    }
+    limit = total >= LIC.FREE_LIMIT;
+  }
+  if (added) await bumpRowsRev();
+  if (lic.licensed) return { added };
+  return { added, limit, total };
 }
 
 // Refuse to start a run when an unlicensed user is already at the cap.
@@ -189,6 +207,7 @@ async function runJob(job) {
   const emails = await findEmails(job.website, job.blacklist || [], job.timeoutMs || 8000);
   if (emails.length) {
     await upsertRows([{ key: job.key, emails: emails.join("; ") }]);
+    await bumpRowsRev();
     broadcast({ type: "EMAILS_UPDATED" });
   }
 }

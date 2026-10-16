@@ -170,6 +170,10 @@ assert.ok(xml.includes('ss:Name="(no location)"'), "blank location grouped");
 const used = new Set(["all"]);
 assert.strictEqual(XLS.sheetName("a/b:c", used), "a b c"); // illegal chars stripped
 assert.strictEqual(XLS.sheetName("a b c", used), "a b c 2"); // duplicate names uniquified
+// XML-illegal control chars are dropped; tab/newline/CR are legal and kept
+assert.strictEqual(XLS.xesc("a\u0000b\u0007c"), "abc");
+assert.strictEqual(XLS.xesc("ok\ttab\nnl"), "ok\ttab\nnl");
+assert.strictEqual(XLS.xesc('A & "B" <C>'), "A &amp; &quot;B&quot; &lt;C&gt;");
 
 // ---- human-pace engine ----
 const PACE = require("./lib/pace.js");
@@ -209,6 +213,25 @@ assert.deepStrictEqual(PACE.nextBackoff(0), { level: 1, minutes: 5, stop: false 
 assert.deepStrictEqual(PACE.nextBackoff(1), { level: 2, minutes: 15, stop: false });
 assert.deepStrictEqual(PACE.nextBackoff(2), { level: 3, minutes: 60, stop: false });
 assert.strictEqual(PACE.nextBackoff(3).stop, true);
+
+// a rest pushes the "last progress" horizon past the break, so the stall
+// watchdog doesn't fire mid-break (background.js waits >90s without progress)
+assert.strictEqual(PACE.restUntil(1000, 90000), 91000);
+assert.strictEqual(PACE.restUntil(5000, -10), 5000); // negative clamps to "now"
+assert.ok(PACE.restUntil(Date.now(), 300000) - Date.now() >= 299000);
+
+// ---- DOM selectors (pure selection policy, fake scope) ----
+const SELX = require("./lib/selectors.js");
+const fakeScope = (map) => ({ querySelectorAll: (s) => map[s] || [] });
+// one stale element in an older selector must not starve a later group of real cards
+assert.strictEqual(SELX.queryAll(fakeScope({ a: [{ id: 1 }], b: [{ id: 2 }, { id: 3 }] }), ["a", "b"]).length, 2);
+// a confident first group still wins outright
+assert.strictEqual(SELX.queryAll(fakeScope({ a: [{ id: 1 }, { id: 2 }], b: [{ id: 3 }, { id: 4 }, { id: 5 }] }), ["a", "b"]).length, 2);
+// a single-result page keeps the lone fallback
+assert.strictEqual(SELX.queryAll(fakeScope({ a: [{ id: 1 }], b: [] }), ["a", "b"]).length, 1);
+assert.deepStrictEqual(SELX.queryAll(fakeScope({}), ["a", "b"]), []);
+// an invalid selector is skipped, not thrown
+assert.strictEqual(SELX.queryAll({ querySelectorAll: (s) => { if (s === "bad[") throw new Error("nope"); return [{ id: 9 }]; } }, ["bad[", "ok"]).length, 1);
 
 // ---- licensing (Keygen state machine, pure logic) ----
 const LIC = require("./lib/license.js");

@@ -1,8 +1,11 @@
 // Excel 2003 XML workbook: one worksheet (tab) per search Location, plus a combined "All" tab.
 // Classic script: exposed on globalThis.XLSX (+ module.exports for the node self-test).
 (function (root) {
+  // XML 1.0 forbids the control chars below; if one survives into a cell the
+  // whole workbook stops opening in Excel. Strip them, then escape the markup.
+  const ILLEGAL = /[\x00-\x08\x0B\x0C\x0E-\x1F]/g;
   const xesc = (s) =>
-    String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    String(s == null ? "" : s).replace(ILLEGAL, "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // Excel sheet name: <=31 chars, no \ / ? * [ ] :, and unique within the workbook.
   function sheetName(loc, used) {

@@ -12,7 +12,7 @@
   // Fill these in from your Keygen dashboard before distributing.
   const CONFIG = {
     account: "ec76292c-8de4-47a3-87f7-d2ac3fb92933",
-    buyUrl: "REPLACE_WITH_BUY_URL",
+    buyUrl: "py.me/GMECHECKOUT",
   };
   const API = "https://api.keygen.sh/v1/accounts";
   const STORE_KEY = "ms_lic";

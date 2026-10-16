@@ -76,10 +76,16 @@ function renderLicense() {
     if ($("licDeactivate")) $("licDeactivate").hidden = true;
   }
   const buy = LIC.CONFIG.buyUrl;
-  const buyable = buy && !/REPLACE_WITH/.test(buy);
+  // Accept a bare host (no scheme) so pasting a short link into the config just works.
+  const buyHref = buy && !/REPLACE_WITH/.test(buy) ? (/^https?:\/\//i.test(buy) ? buy : "https://" + buy) : "";
   for (const id of ["licBuy", "licBuy2", "dataLicBuy"]) {
     const a = $(id);
-    if (a) { if (buyable) { a.href = buy; a.hidden = false; } else a.hidden = true; }
+    if (a) { if (buyHref) { a.href = buyHref; a.hidden = false; } else a.hidden = true; }
+  }
+  // Disabled export buttons explain themselves instead of looking broken.
+  for (const id of ["csv", "excel", "json"]) {
+    const b = $(id);
+    if (b) b.title = LIC_ST.licensed ? "Export your leads" : "License required to export";
   }
 }
 async function refreshLicense() {
@@ -319,7 +325,11 @@ function filtered() {
   if (text) rows = rows.filter((r) => CSV_COLS.some((c) => String(r[c] || "").toLowerCase().includes(text)));
 
   const c = compiledLists();
-  let dec = rows.map((r) => ({ r, t: SEG_ON ? tierOfRow(r, c) : 0, a: SEG_ON ? SEG.action(tierOfRow(r, c), r.phone) : "" }));
+  let dec = rows.map((r) => {
+    if (!SEG_ON) return { r, t: 0, a: "" };
+    const t = tierOfRow(r, c);
+    return { r, t, a: SEG.action(t, r.phone) };
+  });
   if (SEG_ON && tierFilter) dec = dec.filter((d) => String(d.t) === tierFilter);
 
   const dir = sortDir === "asc" ? 1 : -1;
@@ -397,7 +407,7 @@ async function render() {
   }
 
   if (s && s.mode === "places") {
-    $("progressText").textContent = `${s.done || 0} API calls`;
+    $("progressText").textContent = `${s.done || 0} pages`;
     $("fill").style.width = running ? "60%" : "0%";
   } else {
     $("progressText").textContent = `${running ? done : total}/${total}`;
@@ -707,6 +717,8 @@ const TOUR_STEPS = [
   { tab: "data", el: null, title: "You're ready", text: "The full flow: Data tab → keywords + locations → Start Extracting → watch the Tasks tab → export CSV/Excel/JSON. Replay this tour any time with 'Take a tour' in the header." },
 ];
 let tourI = 0;
+let tourReturnFocus = null;
+const TOUR_FOCUSABLE = () => ["tourBack", "tourSkip", "tourNext"].map($).filter((b) => b && !b.disabled);
 function tourShow() {
   const s = TOUR_STEPS[tourI];
   $("tourCount").textContent = `Step ${tourI + 1} of ${TOUR_STEPS.length} · ${s.tab[0].toUpperCase() + s.tab.slice(1)} tab`;
@@ -745,10 +757,20 @@ function tourPlace() {
   card.style.left = left + "px";
   card.style.top = top + "px";
 }
-function tourStart() { tourI = 0; $("tour").hidden = false; tourShow(); }
+function tourStart() {
+  tourI = 0;
+  tourReturnFocus = document.activeElement;
+  const card = $("tourCard");
+  card.setAttribute("tabindex", "-1");
+  $("tour").hidden = false;
+  tourShow();
+  card.focus();
+}
 function tourEnd() {
   $("tour").hidden = true;
   try { localStorage.setItem(TOUR_KEY, "1"); } catch { /* storage blocked */ }
+  if (tourReturnFocus && tourReturnFocus.focus) { try { tourReturnFocus.focus(); } catch { /* gone */ } }
+  tourReturnFocus = null;
 }
 function tourStep(d) {
   tourI += d;
@@ -765,6 +787,15 @@ addEventListener("keydown", (e) => {
   if (e.key === "Escape") tourEnd();
   if (e.key === "ArrowRight") tourStep(1);
   if (e.key === "ArrowLeft") tourStep(-1);
+  // Keep Tab inside the modal card, like any other dialog.
+  if (e.key === "Tab") {
+    const items = TOUR_FOCUSABLE();
+    if (!items.length) return;
+    const inside = items.includes(document.activeElement);
+    if (inside && e.shiftKey && document.activeElement === items[0]) { e.preventDefault(); items[items.length - 1].focus(); }
+    else if (inside && !e.shiftKey && document.activeElement === items[items.length - 1]) { e.preventDefault(); items[0].focus(); }
+    else if (!inside) { e.preventDefault(); items[e.shiftKey ? items.length - 1 : 0].focus(); }
+  }
 });
 addEventListener("resize", () => { if (!$("tour").hidden) tourPlace(); });
 addEventListener("scroll", () => { if (!$("tour").hidden) tourPlace(); }, true);
@@ -868,10 +899,15 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "STATE" || msg.type === "PROGRESS") render();
 });
 
-// periodic refresh of rows while running (emails land asynchronously)
+// Rows only change when the background saves them, so poll its revision counter
+// instead of re-reading the whole IndexedDB table every 3s.
+let lastRowsRev = -1;
 setInterval(async () => {
   const s = await getState();
-  if (s && s.running) loadRows();
+  if (!s || !s.running) return;
+  if (s.rowsRev === lastRowsRev) return;
+  lastRowsRev = s.rowsRev || 0;
+  loadRows();
 }, 3000);
 
 (async () => {
