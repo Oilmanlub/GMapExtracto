@@ -15,8 +15,8 @@
 6. Pin the extension from the toolbar
 
 ## 2. Free Tier
-- The extension works out of the box on the **Free** tier (up to **50 results**).
-- You can view and export those results without a license.
+- The extension works out of the box on the **Free** tier (up to **50 rows**).
+- You can scrape and preview those results without a license; **exporting (CSV/Excel/JSON) requires a license**.
 
 ## 3. Activate Your License
 1. Click the extension icon in the toolbar to open the panel
