@@ -38,20 +38,20 @@ A Chrome (Manifest V3) extension that turns Google local results into a clean, e
 
 ## What it does
 
-You give it **keywords** (`restaurants`, `dentists`, `plumbers`) and **locations** (`Austin, TX`, `Miami, FL`). Every combination becomes one task. The extension opens Google, walks through the results, extracts the business details from each listing, enriches them with emails from their websites, and builds one deduplicated table you can export.
+You give it **keywords** (`lubricant distributors`, `auto spare parts`, `dentists`) and **locations** (`Nagpur, Maharashtra`, `Pune, Maharashtra`). Every combination becomes one task. The extension opens Google, walks through the results, extracts the business details from each listing, enriches them with emails from their websites, and builds one deduplicated table you can export.
 
 | Column | Example |
 |---|---|
-| Company | Blue Bottle Coffee |
-| Category | Coffee shop |
-| Phone | +1 555-0100 |
-| Website | bluebottlecoffee.com |
-| Emails | hello@bluebottlecoffee.com |
+| Company | Shree Krishna Lubricants |
+| Category | Lubricant supplier |
+| Phone | +91 98765 43210 |
+| Website | shreekrishnalubricants.in |
+| Emails | sales@shreekrishnalubricants.in |
 | Rating / Reviews | 4.6 / 1,204 |
-| Address | 300 Webster St, Oakland, CA 94607 |
-| City / State / Pincode | Oakland / CA / 94607 |
-| Latitude / Longitude | 37.8044 / -122.2712 |
-| CID / Plus code / URL | 1234567890 / 849V+ / google.com/maps/... |
+| Address | 42 Central Avenue, Gandhibagh, Nagpur, Maharashtra 440002 |
+| City / State / Pincode | Nagpur / Maharashtra / 440002 |
+| Latitude / Longitude | 21.1458 / 79.0882 |
+| CID / Plus code / URL | 1234567890 / 7J4V+9X / google.com/maps/... |
 
 ---
 
@@ -98,9 +98,9 @@ Not published yet. Use Option A.
 2. On the **Data** tab, type keywords and locations — one per line:
 
    ```
-   restaurants          Austin, TX
-   dentists             Miami, FL
-   plumbers
+   lubricant distributors    Nagpur, Maharashtra
+   auto spare parts          Pune, Maharashtra
+   dentists
    ```
 
    3 keywords × 2 locations = **6 tasks**.
@@ -320,7 +320,6 @@ To test: `chrome://extensions` → **Load unpacked** → select `maps-scraper` �
 ## Credits
 
 Created by **@NAPX10** · maintained by **Oilmanlub**.
-
 ---
 
 ## Disclaimer

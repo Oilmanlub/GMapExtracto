@@ -61,8 +61,8 @@ Google Map Extractor is a Chrome extension that extracts local business leads (n
 
 ## 6. Quick Start (5-Minute Tutorial)
 1. Open the extension panel
-2. **Data → Keywords**: Add one per line (e.g., `plumbers`, `electricians`)
-3. **Data → Locations**: Add one per line (e.g., `Austin, TX`, `Miami, FL`)
+2. **Data → Keywords**: Add one per line (e.g., `lubricant distributors`, `auto spare parts`)
+3. **Data → Locations**: Add one per line (e.g., `Nagpur, Maharashtra`, `Pune, Maharashtra`)
 4. **Human pace**: Keep Balanced (recommended)
 5. Click **Start Extracting**
 6. The extension opens Google Search tabs and extracts results automatically
@@ -103,7 +103,7 @@ To move your license to a different computer:
 
 ## 9. Building Your Search
 - **Keywords** (one per line): e.g., `restaurants`, `dentists`, `plumbers`, `oil distributor`
-- **Locations** (one per line): City/Region names (e.g., `Dallas, TX`, `New York, NY`). Leave blank carefully if needed.
+- **Locations** (one per line): City/Region names (e.g., `Nagpur, Maharashtra`, `Pune, Maharashtra`). Leave blank carefully if needed.
 - **Data Source**: `Google Search (scrape)` (default) or `Places API (official)` (requires billing-enabled Places API key)
 
 ## 10. Extraction Modes
