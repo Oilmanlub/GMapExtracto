@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="color-scheme" content="light dark" />
+  <script src="lib/theme.js"></script>
+  <title>Google Map Extractor</title>
+  <link rel="icon" href="icons/icon32.png" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <header class="navbar">
+    <img class="logo" src="icons/icon32.png" alt="" />
+    <span class="brand">Google Map Extractor</span>
+    <span class="brand-sub">bulk local lead extraction</span>
+    <span class="credit">Created by <b>@NAPX10</b></span>
+    <span id="hdrLicChip" class="chip">Free</span>
+    <button id="hdrLicBtn" class="btn ghost tiny">Activate</button>
+    <button id="tourBtn" class="btn ghost tiny" type="button">Take a tour</button>
+    <button id="theme" class="iconbtn" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    </button>
+  </header>
+
+  <div class="toolbar">
+    <button id="start" class="btn primary">Start Extracting</button>
+    <button id="pause" class="btn" disabled>Pause</button>
+    <button id="resume" class="btn" disabled>Resume</button>
+    <button id="stop" class="btn danger" disabled>Stop</button>
+    <span class="sep"></span>
+    <button id="csv" class="btn" disabled>CSV</button>
+    <button id="excel" class="btn" disabled>Excel</button>
+    <button id="json" class="btn" disabled>JSON</button>
+    <span class="sep"></span>
+    <button id="emailAll" class="btn ghost">Extract Emails</button>
+    <button id="clear" class="btn ghost">Clear Data</button>
+
+    <div class="stat">
+      <div class="value" id="resultCount">0</div>
+      <div class="label">Results found</div>
+    </div>
+  </div>
+
+  <nav class="tabbar" role="tablist" aria-label="Control panel sections">
+    <button class="tabbtn active" id="tabbtn-data" data-tab="data" role="tab" aria-selected="true" aria-controls="tab-data" tabindex="0">Data</button>
+    <button class="tabbtn" id="tabbtn-tasks" data-tab="tasks" role="tab" aria-selected="false" aria-controls="tab-tasks" tabindex="-1">Tasks</button>
+    <button class="tabbtn" id="tabbtn-settings" data-tab="settings" role="tab" aria-selected="false" aria-controls="tab-settings" tabindex="-1">Settings &amp; History</button>
+  </nav>
+
+  <section class="tabpanel grid" id="tab-data" role="tabpanel" aria-labelledby="tabbtn-data">
+    <div class="panel">
+      <h2 class="panel-title">License</h2>
+      <div class="row">
+        <span id="dataLicChip" class="chip">Free</span>
+        <span class="muted" id="dataLicInfo">Free — up to 50 rows. Export requires license.</span>
+      </div>
+      <div class="row">
+        <button id="dataLicOpen" class="btn primary">Activate license</button>
+        <a id="dataLicBuy" class="btn" href="#" target="_blank" rel="noreferrer">Buy</a>
+        <button id="dataLicDeactivate" class="btn ghost" hidden>Deactivate</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Source &amp; query</h2>
+      <label for="source">Data source</label>
+      <select id="source">
+        <option value="search">Google Search (scrape)</option>
+        <option value="places">Places API (official)</option>
+      </select>
+      <input id="apiKey" type="password" aria-label="Places API key" placeholder="Places API key (billing required)" hidden />
+
+      <label for="keywords">Keywords (<span id="kwCount">0</span>)</label>
+      <textarea id="keywords" rows="5" placeholder="restaurants&#10;dentists&#10;plumbers"></textarea>
+
+      <label for="locations">Locations (<span id="locCount">0</span>)</label>
+      <textarea id="locations" rows="5" placeholder="Austin, TX&#10;Miami, FL"></textarea>
+
+      <label for="regexList">Email regex blacklist (<span id="rxCount">0</span>)</label>
+      <textarea id="regexList" rows="2" placeholder="one substring per line, e.g. noreply@"></textarea>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Email enrichment</h2>
+      <label for="enrichMode">Enrichment mode</label>
+      <select id="enrichMode">
+        <option value="off">Off</option>
+        <option value="after" selected>After scraping (queue)</option>
+        <option value="during">During scraping (inline)</option>
+      </select>
+
+      <label for="maxEmailTime">Max seconds for extracting emails per website</label>
+      <input id="maxEmailTime" type="number" min="1" value="8" />
+
+      <label for="delaySeconds">Delay between pages (seconds)</label>
+      <input id="delaySeconds" type="number" min="0" step="0.5" value="1.5" />
+
+      <label for="maxPages">Max pages per keyword (0 = all)</label>
+      <input id="maxPages" type="number" min="0" value="0" />
+
+      <label for="repeatMinutes">Repeat run every N minutes (0 = off)</label>
+      <input id="repeatMinutes" type="number" min="0" value="0" />
+
+      <label class="check"><input id="fastMode" type="checkbox" /> Fast mode (fetch pages, no reload)</label>
+      <label class="check"><input id="deepDetails" type="checkbox" /> Open each result (slower, more detail)</label>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Human pace (anti-CAPTCHA)</h2>
+      <div class="row">
+        <select id="paceProfile" aria-label="Pace profile">
+          <option value="conservative">Conservative (slow, safest)</option>
+          <option value="balanced" selected>Balanced</option>
+          <option value="aggressive">Aggressive (faster, riskier)</option>
+        </select>
+        <label class="check inline-dark"><input id="motion" type="checkbox" checked /> Human motion</label>
+      </div>
+      <div class="row">
+        <span class="muted" id="paceInfo">&mdash;</span>
+        <span id="riskChip" class="chip">idle</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Presets</h2>
+      <div class="row">
+        <input id="presetName" type="text" aria-label="Preset name" placeholder="preset name" />
+        <button id="presetSave" class="btn">Save</button>
+      </div>
+      <div class="row">
+        <select id="presetList" aria-label="Saved presets"></select>
+        <button id="presetLoad" class="btn">Load</button>
+        <button id="presetDel" class="btn icon ghost" type="button" aria-label="Delete selected preset" title="Delete selected preset">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M6 6l1 14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-14"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Diagnostics (Search source)</h2>
+      <div class="row">
+        <button id="diagBtn" class="btn">Test selectors</button>
+        <button id="dumpBtn" class="btn ghost">Dump page JSON</button>
+      </div>
+      <pre id="diag" class="diag" hidden></pre>
+    </div>
+  </section>
+
+  <section class="tabpanel" id="tab-tasks" role="tabpanel" aria-labelledby="tabbtn-tasks" hidden>
+    <div class="panel status">
+      <p class="active"><span id="dot" class="dot"></span>
+        Active: <b><span id="activeQuery">-</span></b>
+      </p>
+      <span class="progress-label">Progress (<span id="progressText">0/0</span>)</span>
+      <div class="bar" role="progressbar" aria-label="Extraction progress"><div id="fill"></div></div>
+      <p id="banner" class="banner" role="status" hidden></p>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Task queue (<span id="taskCounts">0/0 done</span>)</h2>
+      <ol id="taskList" class="task-list"></ol>
+    </div>
+
+    <div class="panel grow">
+      <div class="filterbar">
+        <input id="filter" type="text" aria-label="Filter results" placeholder="Filter results&hellip;" />
+        <select id="tierFilter" class="tiny" aria-label="Filter by tier">
+          <option value="">All tiers</option>
+          <option value="1">Tier 1</option>
+          <option value="2">Tier 2</option>
+          <option value="3">Tier 3</option>
+        </select>
+        <label class="check inline-dark"><input id="onlyEmail" type="checkbox" /> Only with email</label>
+        <label class="check inline-dark"><input id="noDupePhones" type="checkbox" /> No duplicate phones</label>
+        <button id="dedupe" class="btn ghost tiny">Remove duplicates</button>
+        <span class="muted" id="shownCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="results">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col" data-key="company_name">Company</th>
+              <th scope="col" data-key="tier">Tier</th>
+              <th scope="col" data-key="action">Action</th>
+              <th scope="col" data-key="category">Category</th>
+              <th scope="col" class="mono" data-key="phone">Phone</th>
+              <th scope="col" data-key="website">Website</th>
+              <th scope="col" data-key="emails">Emails</th>
+              <th scope="col" class="num" data-key="rating">Rating</th>
+              <th scope="col" class="num" data-key="reviews">Reviews</th>
+              <th scope="col" data-key="address">Address</th>
+              <th scope="col" data-key="city">City</th>
+              <th scope="col" data-key="state">State</th>
+              <th scope="col" class="mono" data-key="cid">CID</th>
+              <th scope="col" data-key="url">URL</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="tabpanel grid" id="tab-settings" role="tabpanel" aria-labelledby="tabbtn-settings" hidden>
+    <div class="panel">
+      <h2 class="panel-title">Lead segregation (Oilman India)</h2>
+      <div class="row">
+        <button id="segregate" class="btn primary">Segregate Leads</button>
+      </div>
+      <label class="check"><input id="segAuto" type="checkbox" /> Auto-segregate after each scrape</label>
+      <details class="fold">
+        <summary>Keyword lists</summary>
+        <label for="tier1">Tier 1 keywords</label>
+        <textarea id="tier1" rows="3">oil
+lubricant
+lube
+petroleum
+wholesale
+distributor
+stockist
+agency
+castrol
+mobil
+gulf
+servo
+veedol
+bharat
+grease
+hydraulic</textarea>
+        <label for="tier2">Tier 2 keywords</label>
+        <textarea id="tier2" rows="2">auto parts
+spare parts
+motor parts
+automobile
+auto accessories
+accessories</textarea>
+        <label for="tier3">Tier 3 keywords</label>
+        <textarea id="tier3" rows="2">garage
+service center
+repair
+workshop
+bike repair
+mechanic
+tyre</textarea>
+      </details>
+      <details class="fold">
+        <summary>AI fallback (optional)</summary>
+        <label class="check"><input id="aiOn" type="checkbox" /> Use AI for unclear rows</label>
+        <input id="aiBase" type="text" aria-label="AI base URL" placeholder="https://api.openai.com/v1" />
+        <input id="aiKey" type="password" aria-label="AI API key" placeholder="API key" />
+        <input id="aiModel" type="text" aria-label="AI model" placeholder="model (e.g. gpt-4o-mini)" />
+      </details>
+      <div id="segSummary" class="seg-summary" hidden></div>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Scraping history</h2>
+      <div id="runsList" class="exp-list"></div>
+      <div class="row">
+        <button id="runsClear" class="btn ghost tiny" hidden>Clear history</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Downloads history</h2>
+      <div id="exportsList" class="exp-list"></div>
+      <div class="row">
+        <button id="exportsClear" class="btn ghost tiny" hidden>Clear history</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">License</h2>
+      <div class="row">
+        <span id="licChip" class="chip">Free</span>
+        <span class="muted" id="licInfo">Free tier — up to 50 rows.</span>
+      </div>
+      <div class="row">
+        <button id="licOpen" class="btn primary">Activate license</button>
+        <a id="licBuy2" class="btn" href="#" target="_blank" rel="noreferrer">Buy</a>
+        <button id="licDeactivate" class="btn ghost" hidden>Deactivate</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="licenseGate" class="gate" hidden>
+    <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+      <h2 id="gateTitle">Unlock Google Map Extractor</h2>
+      <p class="muted">You've reached the free limit of 50 rows. Enter a license key to keep extracting without limits.</p>
+      <label for="licKey">License key</label>
+      <input id="licKey" type="text" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" spellcheck="false" />
+      <p id="licenseMsg" class="gate-msg" role="status" aria-live="polite"></p>
+      <div class="row">
+        <button id="licActivate" class="btn primary">Activate</button>
+        <a id="licBuy" class="btn" href="#" target="_blank" rel="noreferrer">Buy a license</a>
+        <button id="licContinue" class="btn ghost">Continue free</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tour" class="tour" hidden>
+    <div id="tourSpot" class="tour-spot"></div>
+    <div id="tourCard" class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+      <span class="muted" id="tourCount"></span>
+      <h3 id="tourTitle"></h3>
+      <p id="tourText"></p>
+      <div class="row">
+        <button id="tourBack" class="btn ghost">Back</button>
+        <button id="tourSkip" class="btn ghost">Skip tour</button>
+        <button id="tourNext" class="btn primary">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="lib/parse.js"></script>
+<script src="lib/segregate.js"></script>
+<script src="lib/excel.js"></script>
+<script src="lib/pace.js"></script>
+<script src="lib/license.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

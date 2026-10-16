@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Google Map Extractor",
+  "version": "1.5.0",
+  "description": "Bulk-extract business leads from Google local results (or the Places API): name, category, address, phone, website, rating, reviews, GPS, emails. Free up to 50 rows; unlock unlimited with a license key. Runs locally.",
+  "permissions": ["storage", "tabs", "alarms", "unlimitedStorage", "notifications"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Google Map Extractor",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.google.com/search*", "https://consent.google.com/*"],
+      "js": ["lib/parse.js", "lib/selectors.js", "lib/json-extract.js", "lib/pace.js", "content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
