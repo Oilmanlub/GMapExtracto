@@ -15,7 +15,7 @@ This is a step-by-step, beginner-friendly guide to installing, configuring, and 
 10. [Extraction Modes](#extraction-modes)
 11. [Human Pace & Anti-CAPTCHA](#human-pace--anti-captcha)
 12. [Email Enrichment](#email-enrichment)
-13. [Lead Segregation (Oilman India)](#lead-segregation-oilman-india)
+13. [Lead Segregation](#lead-segregation)
 14. [Data Management & Filtering](#data-management--filtering)
 15. [Exporting Leads](#exporting-leads)
 16. [Runs, History & Exports](#runs-history--exports)
@@ -61,7 +61,7 @@ Google Map Extractor is a Chrome extension that extracts local business leads (n
 
 ## 6. Quick Start (5-Minute Tutorial)
 1. Open the extension panel
-2. **Data → Keywords**: Add one per line (e.g., `lubricant distributors`, `auto spare parts`)
+2. **Data → Keywords**: Add one per line (e.g., `restaurants`, `dentists`)
 3. **Data → Locations**: Add one per line (e.g., `Nagpur, Maharashtra`, `Pune, Maharashtra`)
 4. **Human pace**: Keep Balanced (recommended)
 5. Click **Start Extracting**
@@ -102,7 +102,7 @@ To move your license to a different computer:
 4. Do **not** skip step 1. If you lost access to the original PC before deactivating, contact support to release the slot.
 
 ## 9. Building Your Search
-- **Keywords** (one per line): e.g., `restaurants`, `dentists`, `plumbers`, `oil distributor`
+- **Keywords** (one per line): e.g., `restaurants`, `dentists`, `plumbers`
 - **Locations** (one per line): City/Region names (e.g., `Nagpur, Maharashtra`, `Pune, Maharashtra`). Leave blank carefully if needed.
 - **Data Source**: `Google Search (scrape)` (default) or `Places API (official)` (requires billing-enabled Places API key)
 
@@ -125,11 +125,11 @@ Enable **Human motion** for more natural behavior. The extension uses randomized
 - **During scraping (inline)**: Extracts while scraping (slower)
 - **Max seconds per website**: Controls how long to crawl each site for emails
 
-## 13. Lead Segregation (Oilman India)
+## 13. Lead Segregation
 Classifies leads into tiers (T1/T2/T3) based on category/keywords:
-- **T1** (Call First): Oil/lubricant/wholesale/distributor/stockist/agency/brands
-- **T2** (Call Second): Auto/spare parts/accessories
-- **T3** (Call Last): Garage/service/repair/workshop/mechanic
+- **T1** (Call First): Your top-priority keyword list (Tier 1 keywords box)
+- **T2** (Call Second): Your secondary keyword list (Tier 2 keywords box)
+- **T3** (Call Last): Everything else / low priority (Tier 3 keywords box)
 - **Care No. — Skip**: Toll-free/care numbers excluded
 - **Auto-segregate after each scrape**: Apply automatically
 

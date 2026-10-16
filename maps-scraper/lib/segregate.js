@@ -1,21 +1,11 @@
-// Lead segregation for Oilman India (lubricant manufacturer).
-// Rule-based keyword classification into 3 tiers, with a hook for AI fallback.
+// Lead segregation: rule-based keyword classification into 3 tiers, with a hook for AI fallback.
 // Classic script: exposed as globalThis.SEG (+ module.exports for the node self-test).
 (function (root) {
-  const DEFAULT_TIER1 = [
-    "oil", "oils", "lubricant", "lubricants", "lube", "lubricating", "petroleum",
-    "wholesale", "wholesaler", "distributor", "distributors", "stockist",
-    "super stockist", "agency", "castrol", "mobil", "gulf", "servo", "veedol",
-    "bharat", "grease", "hydraulic", "engine oil", "motor oil", "fuel",
-  ];
-  const DEFAULT_TIER2 = [
-    "auto parts", "spare parts", "spares", "motor parts", "automobile",
-    "auto accessories", "car accessories", "bike accessories", "accessories", "auto spare",
-  ];
-  const DEFAULT_TIER3 = [
-    "garage", "service center", "service centre", "repair", "workshop",
-    "bike repair", "car wash", "servicing", "mechanic", "tyre", "puncture",
-  ];
+  // No prefilled keywords: users define their own lists in Settings. Until then,
+  // every row is "unclear" (tier 3) and the AI fallback can classify them.
+  const DEFAULT_TIER1 = [];
+  const DEFAULT_TIER2 = [];
+  const DEFAULT_TIER3 = [];
 
   function norm(v) {
     if (Array.isArray(v)) return v.map((s) => String(s).trim().toLowerCase()).filter(Boolean);

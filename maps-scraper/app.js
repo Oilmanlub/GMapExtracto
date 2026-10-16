@@ -120,7 +120,7 @@ async function doActivate(btn) {
   }
 }
 
-// ---- lead segregation (Oilman India) ---------------------------------------
+// ---- lead segregation ------------------------------------------------------
 let SEG_ON = false;
 let lastSegCount = -1;
 const TIER_OVERRIDE = new Map(); // key -> tier, filled by the AI fallback
@@ -244,9 +244,9 @@ function writeForm(f) {
   $("paceProfile").value = f.paceProfile || "balanced";
   $("motion").checked = f.motion !== false;
   $("noDupePhones").checked = !!f.noDupePhones;
-  $("tier1").value = f.tier1 ?? SEG.DEFAULT_TIER1.join("\n");
-  $("tier2").value = f.tier2 ?? SEG.DEFAULT_TIER2.join("\n");
-  $("tier3").value = f.tier3 ?? SEG.DEFAULT_TIER3.join("\n");
+  $("tier1").value = f.tier1 ?? "";
+  $("tier2").value = f.tier2 ?? "";
+  $("tier3").value = f.tier3 ?? "";
   $("aiOn").checked = !!f.aiOn;
   $("aiBase").value = f.aiBase ?? "";
   $("aiKey").value = f.aiKey ?? "";
@@ -605,7 +605,7 @@ async function emailAll() {
   toast(`Queued ${res && res.queued != null ? res.queued : "?"} sites.`);
 }
 
-// ---- lead segregation (Oilman India) ---------------------------------------
+// ---- lead segregation ------------------------------------------------------
 async function segregate() {
   if (!ROWS.length) return toast("No data to segregate yet.");
   SEG_ON = true;
@@ -629,6 +629,7 @@ async function segregate() {
           baseUrl: $("aiBase").value || "https://api.openai.com/v1",
           apiKey: $("aiKey").value,
           model: $("aiModel").value || "gpt-4o-mini",
+          ...listsOpts(),
         })
         .catch(() => null);
       const tiers = (res && res.tiers) || [];

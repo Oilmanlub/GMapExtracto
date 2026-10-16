@@ -95,26 +95,35 @@ assert.strictEqual(X.mapsPlace(rec).cid, "0x89c25a1b2c3d4e5f:0x1f2ab3");
 // balanced slice keeps nested arrays intact
 assert.strictEqual(X.sliceBalanced("data:[[1,[2,3]],4]", 5), "[[1,[2,3]],4]");
 
-// ---- lead segregation (Oilman India) ----
+// ---- lead segregation ----
 const SEG = require("./lib/segregate.js");
 
-// tier assignment from name / category / keyword
-assert.strictEqual(SEG.tierOf({ company_name: "Shree Petroleum Agency" }), 1);
-assert.strictEqual(SEG.tierOf({ company_name: "Oil Depot", category: "Castrol Dealer" }), 1);
-assert.strictEqual(SEG.tierOf({ company_name: "Auto Parts Bazaar", category: "auto parts" }), 2);
-assert.strictEqual(SEG.tierOf({ company_name: "City Garage", category: "car repair" }), 3);
-// unmatched rows default to the low-priority tier
-assert.strictEqual(SEG.tierOf({ company_name: "Ramesh Traders", category: "retail shop" }), 3);
+// no prefilled keywords: nothing matches until the user defines their lists
+assert.strictEqual(SEG.DEFAULT_TIER1.length, 0);
+assert.strictEqual(SEG.tierOf({ company_name: "Anything Ltd" }), 3);
 
-// word-boundary safety: "Boiler" must NOT count as "oil"
-assert.strictEqual(SEG.tierOf({ company_name: "Boiler Sales" }), 3);
+const KW = {
+  tier1: ["wholesale", "distributor", "stockist", "agency"],
+  tier2: ["retail", "shop"],
+  tier3: ["kiosk", "stall"],
+};
+
+// tier assignment from name / category / keyword
+assert.strictEqual(SEG.tierOf({ company_name: "Alpha Wholesale" }, KW), 1);
+assert.strictEqual(SEG.tierOf({ company_name: "Beta Shop", category: "retail" }, KW), 2);
+assert.strictEqual(SEG.tierOf({ company_name: "Gamma Kiosk" }, KW), 3);
+// unmatched rows default to the low-priority tier
+assert.strictEqual(SEG.tierOf({ company_name: "Delta Traders", category: "misc" }, KW), 3);
+
+// word-boundary safety: "Wholesaler" must NOT count as "wholesale"
+assert.strictEqual(SEG.tierOf({ company_name: "Wholesaler Hub" }, KW), 3);
 
 // custom keyword lists override the defaults
-assert.strictEqual(SEG.tierOf({ company_name: "Xyz", category: "petroleum" }, { tier1: ["oil"], tier2: ["petroleum"] }), 2);
+assert.strictEqual(SEG.tierOf({ company_name: "Xyz", category: "retail" }, { tier1: ["retail"], tier2: ["shop"] }), 1);
 
 // AI-fallback candidates
 assert.strictEqual(SEG.isUnclear({ company_name: "Some Shop", category: "general" }), true);
-assert.strictEqual(SEG.isUnclear({ company_name: "Castrol Agency" }), false);
+assert.strictEqual(SEG.isUnclear({ company_name: "Alpha Wholesale" }, KW), false);
 
 // action rules
 assert.strictEqual(SEG.action(1, ""), "No Phone — Skip");
@@ -129,17 +138,17 @@ assert.strictEqual(SEG.action(1, "1800 123 4567"), "Care No. — Skip");
 
 // counts + top-10 (Tier 1 with a phone, sorted by rating)
 const segRows = [
-  { company_name: "Low Oil Co", phone: "", rating: "4.9" },
-  { company_name: "Oil A", phone: "111", rating: "4.0" },
-  { company_name: "Oil B", phone: "222", rating: "4.9" },
-  { company_name: "Garage X", phone: "333", rating: "5.0" },
+  { company_name: "Low Priority Co", phone: "", rating: "4.9" },
+  { company_name: "Alpha Wholesale", phone: "111", rating: "4.0" },
+  { company_name: "Beta Agency", phone: "222", rating: "4.9" },
+  { company_name: "Gamma Shop", phone: "333", rating: "5.0" },
 ];
-const seg = SEG.segregate(segRows);
-assert.deepStrictEqual(seg.counts, { 1: 3, 2: 0, 3: 1 });
+const seg = SEG.segregate(segRows, KW);
+assert.deepStrictEqual(seg.counts, { 1: 2, 2: 1, 3: 1 });
 assert.strictEqual(seg.top10.length, 2); // Tier 1 with a phone only
-assert.strictEqual(seg.top10[0].company_name, "Oil B"); // higher rating first
+assert.strictEqual(seg.top10[0].company_name, "Beta Agency"); // higher rating first
 // a care number is never a priority call even with a top rating
-assert.strictEqual(SEG.segregate([{ company_name: "Oil Care", phone: "1800 111 222", rating: "5.0" }]).top10.length, 0);
+assert.strictEqual(SEG.segregate([{ company_name: "Alpha Wholesale", phone: "1800 111 222", rating: "5.0" }], KW).top10.length, 0);
 
 // ---- per-location workbook (one tab per Locations-box entry) ----
 const XLS = require("./lib/excel.js");

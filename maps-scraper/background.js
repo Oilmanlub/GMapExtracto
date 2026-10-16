@@ -59,20 +59,25 @@ async function resumeGoogleTab(st) {
 }
 
 // ---- AI fallback: classify unclear leads (OpenAI-compatible endpoint) --------
-const CLASSIFY_SYSTEM =
-  "You classify business leads for an Indian lubricant manufacturer into tiers. " +
-  "Tier 1 = buys/sells engine oil or lubricant in bulk (oil, lubricant, petroleum, wholesaler, distributor, stockist, agency, grease, hydraulic, or a competitor brand Castrol/Mobil/Gulf/Servo/Veedol/Bharat). " +
-  "Tier 2 = auto/spare parts retailer. " +
-  "Tier 3 = garage, service center, repair shop, or unclear. " +
-  'Reply with ONLY a JSON array of {"i":<index>,"tier":<1|2|3>} for every item, same order, no prose.';
+// Prompt is built from the user's own tier keyword lists (no industry assumptions).
+function classifySystemPrompt(tier1, tier2, tier3) {
+  const fmt = (a, fallback) => (a && a.length ? a.join(", ") : fallback);
+  return (
+    "You sort business leads into 3 priority tiers for cold-calling. " +
+    "Tier 1 = strongest fit, keywords: " + fmt(tier1, "the customer's top-priority terms") + ". " +
+    "Tier 2 = secondary fit, keywords: " + fmt(tier2, "the customer's secondary terms") + ". " +
+    "Tier 3 = low priority or unrelated to the customer's business. " +
+    'Reply with ONLY a JSON array of {"i":<index>,"tier":<1|2|3>} for every item, same order, no prose.'
+  );
+}
 
-async function classifyLeads({ items, baseUrl, apiKey, model }) {
+async function classifyLeads({ items, baseUrl, apiKey, model, tier1, tier2, tier3 }) {
   if (!apiKey || !baseUrl || !model || !items || !items.length) return [];
   const body = {
     model,
     temperature: 0,
     messages: [
-      { role: "system", content: CLASSIFY_SYSTEM },
+      { role: "system", content: classifySystemPrompt(tier1, tier2, tier3) },
       { role: "user", content: JSON.stringify(items) },
     ],
   };
